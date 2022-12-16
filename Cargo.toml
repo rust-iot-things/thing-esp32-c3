@@ -1,0 +1,37 @@
+[package]
+name = "esp32-c3"
+version = "0.1.0"
+authors = ["rherrmannr"]
+edition = "2018"
+rust-version = "1.61"
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = "z"
+
+[features]
+default = ["std"]
+std = ["alloc", "anyhow/std",  "esp-idf-sys/std", "esp-idf-hal/std", "embedded-svc/std"]
+alloc = ["cstr_core/alloc", "anyhow", "esp-idf-hal/alloc", "embedded-svc/alloc"]
+#experimental = ["embedded-svc/experimental"]
+
+
+[dependencies]
+anyhow = { version = "1", default-features = false, optional = true } # Only used by the deprecated httpd module#heapless = { version = "0.7", default-features = false }
+cstr_core = "0.2"
+include_cstr = "0.1.0"
+embedded-svc = { version = "0.23", default-features = false }
+esp-idf-sys = { version = "0.31.11", default-features = false, features = ["binstart"] }
+esp-idf-hal = { version = "0.39", default-features = false, features = ["esp-idf-sys"] }
+rand = "0.8.5"
+esp-idf-svc = "0.43.3"
+
+[build-dependencies]
+embuild = "0.29"
+anyhow = "1"
+
+[dependencies.protocol]
+path = "lib/protocol"

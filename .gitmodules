@@ -1,0 +1,3 @@
+[submodule "lib/protocol"]
+	path = lib/protocol
+	url = git@github.com:rust-iot-things/protocol.git
