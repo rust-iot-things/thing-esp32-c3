@@ -10,8 +10,8 @@ use esp_idf_svc::{self, eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartiti
 
 use std::{thread, time::Duration};
 
-const SSID: &str = "YAKINDU";
-const PASSWORD: &str = "internet";
+const SSID: &str = "Internet";
+const PASSWORD: &str = "GibMirInternet!";
 
 fn main() -> Result<()> {
     esp_idf_sys::link_patches();
