@@ -28,10 +28,8 @@ esp-idf-sys = { version = "0.31.11", default-features = false, features = ["bins
 esp-idf-hal = { version = "0.39", default-features = false, features = ["esp-idf-sys"] }
 rand = "0.8.5"
 esp-idf-svc = "0.43.3"
+protocol = { git = "https://github.com/rust-iot-things/protocol" }
 
 [build-dependencies]
 embuild = "0.29"
 anyhow = "1"
-
-[dependencies.protocol]
-path = "lib/protocol"
