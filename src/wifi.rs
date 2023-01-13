@@ -69,7 +69,8 @@ pub fn connect<'a>(
     
         wifi.connect()?;
     
-        if !EspNetifWait::new::<EspNetif>(wifi.sta_netif(), &sysloop)?.wait_with_timeout(
+        print!("Connecting DHCP...");
+        while !EspNetifWait::new::<EspNetif>(wifi.sta_netif(), &sysloop)?.wait_with_timeout(
             Duration::from_secs(20),
             || {
                 wifi.is_connected().unwrap()
