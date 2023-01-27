@@ -43,10 +43,8 @@ where
         ..Default::default()
     };
 
-    let (client, mut connection) = EspMqttClient::new_with_conn(
-        include_str!("../certificates/endpoint"),
-        &conf,
-    )?;
+    let (client, mut connection) =
+        EspMqttClient::new_with_conn(include_str!("../certificates/endpoint"), &conf)?;
 
     println!("MQTT client started");
     let notifier = Arc::new(Mutex::new(Notifier::new()));

@@ -1,16 +1,21 @@
 use rand::Rng;
 
-#[derive(Clone)]
-pub(crate) struct Thing {
+use crate::lamp::RGB;
+
+pub struct Thing<'a> {
     id: u64,
     name: String,
+    rgb: RGB<'a>,
 }
 
-impl Thing {
+impl Thing<'_> {
     pub fn new() -> Self {
+        let rgb = RGB::new();
+
         Self {
             id: 1771,
             name: "".to_string(),
+            rgb,
         }
     }
 
@@ -19,7 +24,6 @@ impl Thing {
     }
 
     pub(crate) fn set_name(&mut self, name: String) {
-        println!("set name: {}", name);
         self.name = name;
     }
 
@@ -33,5 +37,17 @@ impl Thing {
 
     pub(crate) fn get_humidity(&self) -> u8 {
         45 + rand::thread_rng().gen_range(0..10)
+    }
+
+    pub(crate) fn set_lamp_state(&mut self, state: bool) {
+        if state {
+            self.rgb.on();
+        } else {
+            self.rgb.off();
+        }
+    }
+
+    pub(crate) fn set_lamp_rgb(&mut self, r: u32, g: u32, b: u32) {
+        self.rgb.set(r, g, b);
     }
 }

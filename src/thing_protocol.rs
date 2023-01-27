@@ -1,47 +1,31 @@
 use embedded_svc::mqtt::client::{Event, Message, MessageImpl};
 
-use protocol::message_set_name::SetNameDescirption;
-use protocol::parser_registry::{parse, RegistryType};
-
 use std::str::from_utf8;
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
-use crate::thing;
+use crate::app::Topics;
 
-pub(crate) fn dispatch_event(event: &(Event<MessageImpl>, Arc<Mutex<thing::Thing>>)) {
+pub(crate) fn dispatch_event(event: &(Event<MessageImpl>, Sender<Topics>)) {
     if let Event::Received(message) = event.0.clone() {
         dispatch_message(message, event.1.clone())
     }
 }
 
-fn dispatch_message(message: MessageImpl, thing: Arc<Mutex<thing::Thing>>) {
+fn dispatch_message(message: MessageImpl, tx: Sender<Topics>) {
     let payload: &str = from_utf8(message.data()).unwrap();
     match message.topic().unwrap() {
-        "registry" => handle_registry(payload, thing),
-        "thing_input" => handle_thing_input(payload, thing),
+        "registry" => handle_registry(payload, tx),
+        "thing_input" => handle_thing_input(payload, tx),
         _ => println!("unknwon topic"),
     }
 }
 
-fn handle_thing_input(payload: &str, _thing: Arc<Mutex<thing::Thing>>) {
-    println!("thing_input: {}", payload);
+fn handle_thing_input(payload: &str, tx: Sender<Topics>) {
+    let it = protocol::parser_thing_input::parse(payload);
+    tx.send(Topics::ThingInput(it)).unwrap();
 }
 
-fn handle_registry(payload: &str, thing: Arc<Mutex<thing::Thing>>) {
-    println!("registry: {}", payload);
-
-    match parse(payload) {
-        RegistryType::SetNameType(it) => set_thing_name(it, thing),
-        RegistryType::None => {}
-        _ => {}
-    }
-}
-
-fn set_thing_name(set_name_description: SetNameDescirption, thing: Arc<Mutex<thing::Thing>>) {
-    if set_name_description.set_name.id == thing.lock().unwrap().get_id() {
-        thing
-            .lock()
-            .unwrap()
-            .set_name(set_name_description.set_name.name);
-    }
+fn handle_registry(payload: &str, tx: Sender<Topics>) {
+    let it = protocol::parser_registry::parse(payload);
+    tx.send(Topics::Registry(it)).unwrap();
 }
