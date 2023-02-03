@@ -17,36 +17,29 @@ use crate::thing_mqtt::ThingMQTT;
 pub enum Topics {
     Registry(RegistryType),
     ThingInput(ThingInputType),
+    Timer(Duration),
 }
 
 pub fn start(nvs: &EspNvsPartition<NvsDefault>) -> Result<(), EspError> {
     let (tx, rx) = channel::<Topics>();
-    let mqtt = ThingMQTT::new(tx);
+    let mqtt = ThingMQTT::new(tx.clone());
 
     match Thing::new(nvs) {
         Ok(mut thing) => {
             register_device(&mut thing, &mqtt);
             thing.set_lamp_rgb(100, 100, 100);
             thing.set_lamp_state(true);
-            // thread::scope(|s| {
-            //     s.spawn(|| loop {
-            //         if thing.is_registered() {
-            //             let id = thing.get_id();
-            //             let humidity = thing.get_humidity();
-            //             let humidity_message = message_measurement_humidity::create(id, humidity);
-            //             let temperature = thing.get_temperature();
-            //             let temperature_message = message_measurement_temperature::create(id, temperature);
 
-            //             mqtt.publish("thing_input", temperature_message);
-            //             mqtt.publish("thing_input", humidity_message);
-            //         }
-            //         thread::sleep(Duration::from_secs(7));
-            //     });
-            // });
+            // create Timer event every 10 seconds
+            thread::spawn(move || loop {
+                let duration = Duration::from_secs(10);
+                thread::sleep(duration);
+                tx.send(Topics::Timer(duration)).unwrap();
+            });
 
             loop {
                 match next_event(&rx) {
-                    Some(event) => handle_event(event, &mut thing),
+                    Some(event) => handle_event(event, &mut thing, &mqtt),
                     None => thread::sleep(Duration::from_millis(100)),
                 }
             }
@@ -67,10 +60,21 @@ fn next_event(rx: &Receiver<Topics>) -> Option<Topics> {
     }
 }
 
-fn handle_event(event: Topics, thing: &mut Thing) {
+fn handle_event(event: Topics, thing: &mut Thing, mqtt: &ThingMQTT) {
     match event {
         Topics::Registry(it) => handle_registry(it, thing),
         Topics::ThingInput(it) => handle_thing_input(it, thing),
+        Topics::Timer(_) => handle_timer(thing, mqtt),
+    }
+}
+
+fn handle_timer(thing: &mut Thing, mqtt: &ThingMQTT) {
+    if thing.is_registered() {
+        let message =
+            message_measurement_temperature::create(thing.get_id(), thing.get_temperature());
+        mqtt.publish("thing_input", message);
+        let message = message_measurement_humidity::create(thing.get_id(), thing.get_humidity());
+        mqtt.publish("thing_input", message);
     }
 }
 
