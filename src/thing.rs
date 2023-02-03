@@ -1,25 +1,32 @@
+use esp_idf_sys::EspError;
 use rand::Rng;
 
-use crate::lamp::RGB;
+use crate::{lamp::RGB, nvs_uuid::get_uuid};
 
 pub struct Thing<'a> {
-    id: u64,
+    id: u128,
     name: String,
     rgb: RGB<'a>,
 }
 
 impl Thing<'_> {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, EspError> {
+        // TODO: Error handling for RGB
         let rgb = RGB::new();
 
-        Self {
-            id: 1771,
+        let uuid = match get_uuid() {
+            Ok(uuid) => uuid,
+            Err(e) => return Err(e),
+        };
+
+        Ok(Self {
+            id: uuid,
             name: "".to_string(),
             rgb,
-        }
+        })
     }
 
-    pub fn get_id(&self) -> u64 {
+    pub fn get_id(&self) -> u128 {
         self.id
     }
 

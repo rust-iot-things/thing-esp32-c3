@@ -2,6 +2,7 @@ use std::sync::mpsc::channel;
 use std::time::Duration;
 use std::{sync::mpsc::Receiver, thread};
 
+use esp_idf_sys::EspError;
 use protocol::message_set_name::SetNameDescirption;
 use protocol::parser_registry::RegistryType;
 use protocol::parser_thing_input::ThingInputType;
@@ -17,35 +18,39 @@ pub enum Topics {
     ThingInput(ThingInputType),
 }
 
-pub fn start() {
+pub fn start() -> Result<(), EspError> {
     let (tx, rx) = channel::<Topics>();
     let mqtt = ThingMQTT::new(tx);
 
-    let mut thing = Thing::new();
-    register_device(&mut thing, &mqtt);
-    thing.set_lamp_rgb(111, 12, 222);
-    thing.set_lamp_state(true);
-    // thread::scope(|s| {
-    //     s.spawn(|| loop {
-    //         if thing.is_registered() {
-    //             let id = thing.get_id();
-    //             let humidity = thing.get_humidity();
-    //             let humidity_message = message_measurement_humidity::create(id, humidity);
-    //             let temperature = thing.get_temperature();
-    //             let temperature_message = message_measurement_temperature::create(id, temperature);
+    match Thing::new() {
+        Ok(mut thing) => {
+            register_device(&mut thing, &mqtt);
+            thing.set_lamp_rgb(100, 100, 100);
+            thing.set_lamp_state(true);
+            // thread::scope(|s| {
+            //     s.spawn(|| loop {
+            //         if thing.is_registered() {
+            //             let id = thing.get_id();
+            //             let humidity = thing.get_humidity();
+            //             let humidity_message = message_measurement_humidity::create(id, humidity);
+            //             let temperature = thing.get_temperature();
+            //             let temperature_message = message_measurement_temperature::create(id, temperature);
 
-    //             mqtt.publish("thing_input", temperature_message);
-    //             mqtt.publish("thing_input", humidity_message);
-    //         }
-    //         thread::sleep(Duration::from_secs(7));
-    //     });
-    // });
+            //             mqtt.publish("thing_input", temperature_message);
+            //             mqtt.publish("thing_input", humidity_message);
+            //         }
+            //         thread::sleep(Duration::from_secs(7));
+            //     });
+            // });
 
-    loop {
-        match next_event(&rx) {
-            Some(event) => handle_event(event, &mut thing),
-            None => thread::sleep(Duration::from_millis(100)),
+            loop {
+                match next_event(&rx) {
+                    Some(event) => handle_event(event, &mut thing),
+                    None => thread::sleep(Duration::from_millis(100)),
+                }
+            }
         }
+        Err(error) => return Err(error),
     }
 }
 

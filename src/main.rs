@@ -1,6 +1,7 @@
 mod app;
 mod lamp;
 mod mqtt;
+mod nvs_uuid;
 mod observer;
 mod thing;
 mod thing_mqtt;
@@ -20,6 +21,6 @@ fn main() -> Result<()> {
     let mut _wifi = wifi::connect(sysloop, nvs, SSID, PASSWORD)?;
 
     println!("starting app");
-    app::start();
+    app::start().unwrap();
     Ok(())
 }
