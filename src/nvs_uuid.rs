@@ -1,21 +1,20 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use embedded_svc::storage::RawStorage;
-use esp_idf_svc::nvs;
+use esp_idf_svc::nvs::{self, EspNvsPartition, NvsDefault};
 use esp_idf_sys::*;
 use uuid::Uuid;
 
 // TODO: Use Uuid v7 with timestamp
-pub fn get_uuid() -> Result<u128, EspError> {
-    let partition = nvs::EspDefaultNvsPartition::take().unwrap();
-    let nvs = nvs::EspDefaultNvs::new(partition, "uuidstorage", true).unwrap();
+pub fn get_uuid(partition: &EspNvsPartition<NvsDefault>) -> Result<u128, EspError> {
+    let nvs = nvs::EspDefaultNvs::new(partition.to_owned(), "uuidstorage", true).unwrap();
     let cointains = nvs.contains("uuid").unwrap();
     match cointains {
         true => read_uuid(nvs),
-        false => set_uuid(nvs),
+        false => create_uuid(nvs),
     }
 }
 
-fn set_uuid(nvs: nvs::EspNvs<nvs::NvsDefault>) -> Result<u128, EspError> {
+fn read_uuid(nvs: nvs::EspNvs<nvs::NvsDefault>) -> Result<u128, EspError> {
     let mut uuid = [0; 16];
     match nvs.get_raw("uuid", &mut uuid) {
         Ok(result) => {
@@ -30,7 +29,7 @@ fn set_uuid(nvs: nvs::EspNvs<nvs::NvsDefault>) -> Result<u128, EspError> {
     }
 }
 
-fn read_uuid(mut nvs: nvs::EspNvs<nvs::NvsDefault>) -> Result<u128, EspError> {
+fn create_uuid(mut nvs: nvs::EspNvs<nvs::NvsDefault>) -> Result<u128, EspError> {
     let uuid = Uuid::new_v4();
     let uuid: &[u8; 16] = uuid.as_bytes();
     match nvs.set_raw("uuid", uuid) {

@@ -7,6 +7,11 @@ use crate::app::Topics;
 
 pub(crate) fn dispatch_event(event: &(Event<MessageImpl>, Sender<Topics>)) {
     if let Event::Received(message) = event.0.clone() {
+        println!(
+            "< {}: {}",
+            message.topic().unwrap(),
+            from_utf8(message.data()).unwrap()
+        );
         dispatch_message(message, event.1.clone())
     }
 }

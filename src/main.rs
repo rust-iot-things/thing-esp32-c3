@@ -18,9 +18,9 @@ fn main() -> Result<()> {
     esp_idf_sys::link_patches();
     let sysloop = EspSystemEventLoop::take().unwrap();
     let nvs = EspDefaultNvsPartition::take().unwrap();
-    let mut _wifi = wifi::connect(sysloop, nvs, SSID, PASSWORD)?;
+    let mut _wifi = wifi::connect(sysloop, nvs.clone(), SSID, PASSWORD)?;
 
     println!("starting app");
-    app::start().unwrap();
+    app::start(&nvs).unwrap();
     Ok(())
 }

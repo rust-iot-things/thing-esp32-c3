@@ -2,6 +2,7 @@ use std::sync::mpsc::channel;
 use std::time::Duration;
 use std::{sync::mpsc::Receiver, thread};
 
+use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
 use esp_idf_sys::EspError;
 use protocol::message_set_name::SetNameDescirption;
 use protocol::parser_registry::RegistryType;
@@ -18,11 +19,11 @@ pub enum Topics {
     ThingInput(ThingInputType),
 }
 
-pub fn start() -> Result<(), EspError> {
+pub fn start(nvs: &EspNvsPartition<NvsDefault>) -> Result<(), EspError> {
     let (tx, rx) = channel::<Topics>();
     let mqtt = ThingMQTT::new(tx);
 
-    match Thing::new() {
+    match Thing::new(nvs) {
         Ok(mut thing) => {
             register_device(&mut thing, &mqtt);
             thing.set_lamp_rgb(100, 100, 100);
@@ -83,8 +84,9 @@ fn handle_registry(registry: RegistryType, thing: &mut Thing) {
 }
 
 fn set_thing_name(thing: &mut Thing, set_name_description: SetNameDescirption) {
-    if set_name_description.set_name.id == thing.get_id() {
+    if set_name_description.set_name.id.eq(&thing.get_id()) {
         thing.set_name(set_name_description.set_name.name);
+    } else {
     }
 }
 
@@ -104,7 +106,7 @@ fn set_lamp_rgb(
     thing: &mut Thing,
     lamp_rgb_description: protocol::message_lamp_rgb::LampRGBDescirption,
 ) {
-    if lamp_rgb_description.lamp_rgb.id == thing.get_id() {
+    if lamp_rgb_description.lamp_rgb.id.eq(&thing.get_id()) {
         thing.set_lamp_rgb(
             lamp_rgb_description.lamp_rgb.r,
             lamp_rgb_description.lamp_rgb.g,
@@ -117,7 +119,7 @@ fn set_lamp_state(
     thing: &mut Thing,
     lamp_state_description: protocol::message_lamp_state::LampStateDescirption,
 ) {
-    if lamp_state_description.lamp_state.id == thing.get_id() {
+    if lamp_state_description.lamp_state.id.eq(&thing.get_id()) {
         thing.set_lamp_state(lamp_state_description.lamp_state.state);
     }
 }

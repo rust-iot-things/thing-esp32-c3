@@ -1,33 +1,34 @@
+use esp_idf_svc::nvs::{EspNvsPartition, NvsDefault};
 use esp_idf_sys::EspError;
 use rand::Rng;
 
 use crate::{lamp::RGB, nvs_uuid::get_uuid};
 
 pub struct Thing<'a> {
-    id: u128,
+    id: String,
     name: String,
     rgb: RGB<'a>,
 }
 
 impl Thing<'_> {
-    pub fn new() -> Result<Self, EspError> {
+    pub fn new(nvs: &EspNvsPartition<NvsDefault>) -> Result<Self, EspError> {
         // TODO: Error handling for RGB
         let rgb = RGB::new();
 
-        let uuid = match get_uuid() {
+        let uuid = match get_uuid(nvs) {
             Ok(uuid) => uuid,
             Err(e) => return Err(e),
         };
 
         Ok(Self {
-            id: uuid,
+            id: u128::to_string(&uuid),
             name: "".to_string(),
             rgb,
         })
     }
 
-    pub fn get_id(&self) -> u128 {
-        self.id
+    pub fn get_id(&self) -> String {
+        self.id.clone()
     }
 
     pub(crate) fn set_name(&mut self, name: String) {
